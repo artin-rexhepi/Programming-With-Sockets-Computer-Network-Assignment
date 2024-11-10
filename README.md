@@ -17,4 +17,4 @@ This project implements a UDP-based server-client system for file management, wi
 ## Running the Server
 
 ```bash
-php src/server.php
+php src/server/server.php
