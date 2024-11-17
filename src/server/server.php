@@ -3,12 +3,21 @@
 $port = 8080; 
 $ip_address = '192.168.1.18';
 $server_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
-if ($server_socket === false) {
-    die("Nuk u krijua socket: " . socket_strerror(socket_last_error()) . "\n");
-}
+socket_bind($server_socket, $ip_address, $port);
 
-if (socket_bind($server_socket, $ip_address, $port) === false) {
-    die("Lidhja dështoi: " . socket_strerror(socket_last_error($server_socket)) . "\n");
+$permissions = []; // Lista e aprovimeve për klientët
+
+while (true) {
+    $buf = '';
+    $from = '';
+    $port_from = 0;
+    socket_recvfrom($server_socket, $buf, 1024, 0, $from, $port_from);
+
+    if ($buf === 'kerko_full_access' || $buf === 'kerko_read_only' || $buf === 'kerko_edit') {
+        $permissions[$from] = $buf;
+        $response = "$buf u aprovua.";
+        socket_sendto($server_socket, $response, strlen($response), 0, $from, $port_from);
+    }
 }
 socket_close($server_socket);
 ?>
