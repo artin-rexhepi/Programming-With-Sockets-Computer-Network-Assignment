@@ -41,4 +41,4 @@ php src/server/client.php
 - Use the displayed menu to execute commands based on access level.
 
 ## Requirements
-For detailed requirements, refer to the docs/requirements.md.
+For detailed requirements, refer to the `docs/requirements.md`.
