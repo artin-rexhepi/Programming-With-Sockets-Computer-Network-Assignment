@@ -1,7 +1,7 @@
 <?php
 // Server.php
-$port = 8080; // Specified port number
-$ip_address = '192.168.1.8'; // Server's IP address
+$port = 8080; 
+$ip_address = '192.168.1.19'; 
 
 $server_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 if ($server_socket === false) {
@@ -14,7 +14,7 @@ if (socket_bind($server_socket, $ip_address, $port) === false) {
 
 echo "Server running on UDP at $ip_address:$port\n";
 
-$permissions = []; // List of permissions for clients
+$permissions = []; 
 
 while (true) {
     $buf = '';
@@ -65,6 +65,17 @@ while (true) {
                     $response = "New content written to $file_name.";
                 } else {
                     $response = "You do not have permission to write to files.";
+                }
+            } elseif ($command === 'delete') {
+                if ($permissions[$from] === 'kerko_full_access') {
+                    if (file_exists($file_name)) {
+                        unlink($file_name);
+                        $response = "$file_name deleted.";
+                    } else {
+                        $response = "File $file_name does not exist.";
+                    }
+                } else {
+                    $response = "You do not have permission to delete files.";
                 }
             } else {
                 $response = "Unknown command.";

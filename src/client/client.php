@@ -1,7 +1,7 @@
 <?php
 // Client.php
-$server_ip = '192.168.1.19'; // Server's IP address
-$port = 8080; // Server's port number
+$server_ip = '192.168.1.19'; 
+$port = 8080; 
 
 $client_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 if ($client_socket === false) {
