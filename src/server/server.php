@@ -1,7 +1,7 @@
 <?php
 // Server.php
-$port = 12345; // Numër i portit të caktuar
-$ip_address = '192.168.1.19'; // IP adresa e serverit (reale)
+$port = 12345; // Port number
+$ip_address = '192.168.1.19'; // Server's IP address
 
 $server_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 if ($server_socket === false) {
@@ -14,15 +14,14 @@ if (socket_bind($server_socket, $ip_address, $port) === false) {
 
 echo "Server running on UDP at $ip_address:$port\n";
 
-
-
-$permissions = []; // Lista e aprovimeve për klientët
+$permissions = []; // Permissions for clients
 
 while (true) {
     $buf = '';
     $from = '';
     $port_from = 0;
 
+    // Receive data from the client
     $bytes_received = socket_recvfrom($server_socket, $buf, 1024, 0, $from, $port_from);
     if ($bytes_received === false) {
         echo "Error receiving message: " . socket_strerror(socket_last_error($server_socket)) . "\n";
@@ -31,97 +30,61 @@ while (true) {
 
     $buf = trim($buf);
     if ($buf) {
-        echo "Kërkesë nga $from:$port_from: $buf\n";
+        echo "Request from $from:$port_from: $buf\n";
 
-        // Kontrollo llojin e kërkesës
-        if ($buf === 'kerko_full_access' || $buf === 'kerko_read_only' || $buf === 'kerko_edit') {
-            // Kërko aprovimin nga operatori
-            echo "Shkruani aprovimin për $buf (yes/no): ";
-            $approval = trim(fgets(STDIN));
-
-            if ($approval === 'yes') {
-                $permissions[$from] = $buf;
-                $response = "$buf u aprovua.";
-            } else {
-                $response = "Kërkesa u refuzua.";
-            }
-            socket_sendto($server_socket, $response, strlen($response), 0, $from, $port_from);
+        // Handle password validation
+        if ($buf === 'admin2024') {
+            $permissions[$from] = 'full_access';
+            $response = "Access granted: Full Access";
+        } elseif ($buf === 'editor2024') {
+            $permissions[$from] = 'edit_access';
+            $response = "Access granted: Edit Access";
+        } elseif ($buf === 'guest') {
+            $permissions[$from] = 'read_only';
+            $response = "Access granted: Read Only";
         } elseif (isset($permissions[$from])) {
-            // Kontrollo aksesin e aprovuar për këtë klient
+            // Handle commands based on permissions
             $access_type = $permissions[$from];
-
-            // Përdor logjikën e komandave të bazuara në akses
             $command_parts = explode(" ", $buf);
             $command = $command_parts[0];
-            $file_name = isset($command_parts[1]) ? $command_parts[1] : '';
+            $file_name = $command_parts[1] ?? '';
 
-            if (!in_array($file_name, ['file1.txt', 'file2.txt', 'file3.txt']) && $command !== 'create') {
-                $response = "Skedar i panjohur.";
-            } else {
-                switch ($command) {
-                    case 'read':
-                        if ($access_type === 'kerko_full_access' || $access_type === 'kerko_read_only' || $access_type === 'kerko_edit') {
-                            $content = file_get_contents($file_name);
-                            $response = "Përmbajtja e $file_name:\n$content";
-                        } else {
-                            $response = "Nuk keni qasje për të lexuar.";
-                        }
-                        break;
-                    case 'write':
-                        if ($access_type === 'kerko_full_access' || $access_type === 'kerko_edit') {
-                            $new_content = implode(" ", array_slice($command_parts, 2));
-                            file_put_contents($file_name, $new_content);
-                            $response = "Përmbajtja e re u ruajt në $file_name.";
-                        } else {
-                            $response = "Nuk keni qasje për të shkruar.";
-                        }
-                        break;
-                    case 'delete':
-                        if ($access_type === 'kerko_full_access') {
-                            unlink($file_name);
-                            $response = "$file_name u fshi.";
-                        } else {
-                            $response = "Nuk keni qasje për të fshirë skedarët.";
-                        }
-                        break;
-                    case 'open':
-                        if ($access_type === 'kerko_full_access') {
-                            // Përpiquni të hapni skedarin (në varësi të sistemit operativ)
-                            if (PHP_OS_FAMILY === 'Windows') {
-                                exec("start " . escapeshellarg($file_name));
-                            } elseif (PHP_OS_FAMILY === 'Linux') {
-                                exec("xdg-open " . escapeshellarg($file_name) . " > /dev/null &");
-                            } elseif (PHP_OS_FAMILY === 'Darwin') {
-                                exec("open " . escapeshellarg($file_name));
-                            }
-                            $response = "$file_name u hap.";
-                        } else {
-                            $response = "Nuk keni qasje për të ekzekutuar skedarët.";
-                        }
-                        break;
-                    case 'create':
-                        if ($access_type === 'kerko_full_access') {
-                            if (!file_exists($file_name)) {
-                                file_put_contents($file_name, ""); // Krijon një skedar bosh
-                                $response = "$file_name u krijua me sukses.";
-                            } else {
-                                $response = "Skedari $file_name tashmë ekziston.";
-                            }
-                        } else {
-                            $response = "Nuk keni qasje për të krijuar skedarë.";
-                        }
-                        break;
-                    default:
-                        $response = "Komandë e panjohur.";
-                        break;
+            if ($command === 'list') {
+                $files = array_diff(scandir(getcwd()), ['.', '..']);
+                $response = "Files:\n" . implode("\n", $files);
+            } elseif ($command === 'read' && $access_type !== 'read_only') {
+                if (file_exists($file_name)) {
+                    $content = file_get_contents($file_name);
+                    $response = "Content of $file_name:\n$content";
+                } else {
+                    $response = "File $file_name does not exist.";
                 }
+            } elseif ($command === 'write' && in_array($access_type, ['full_access', 'edit_access'])) {
+                $new_content = implode(" ", array_slice($command_parts, 2));
+                file_put_contents($file_name, $new_content);
+                $response = "Content written to $file_name.";
+            } elseif ($command === 'delete' && $access_type === 'full_access') {
+                if (file_exists($file_name)) {
+                    unlink($file_name);
+                    $response = "File $file_name deleted.";
+                } else {
+                    $response = "File $file_name does not exist.";
+                }
+            } elseif ($command === 'create' && $access_type === 'full_access') {
+                if (!file_exists($file_name)) {
+                    file_put_contents($file_name, "");
+                    $response = "File $file_name created.";
+                } else {
+                    $response = "File $file_name already exists.";
+                }
+            } else {
+                $response = "Command not allowed or unknown.";
             }
-
-            socket_sendto($server_socket, $response, strlen($response), 0, $from, $port_from);
         } else {
-            $response = "Ju nuk keni qasje të aprovuar. Kërkoni qasje.";
-            socket_sendto($server_socket, $response, strlen($response), 0, $from, $port_from);
+            $response = "Invalid password or access request.";
         }
+
+        socket_sendto($server_socket, $response, strlen($response), 0, $from, $port_from);
     }
 }
 

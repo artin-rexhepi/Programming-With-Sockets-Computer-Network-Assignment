@@ -1,7 +1,7 @@
 <?php
 // Client.php
-$server_ip = '192.168.1.19'; // IP adresa e serverit
-$port = 12345; // Porti i serverit
+$server_ip = '192.168.1.19'; // Server's IP address
+$port = 12345; // Server's port number
 
 $client_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 if ($client_socket === false) {
@@ -10,61 +10,61 @@ if ($client_socket === false) {
 
 echo "Client running. Connecting to $server_ip:$port\n";
 
-while (true) {
-    echo "Zgjidhni një opsion për të kërkuar qasje: full_access, read_only, edit (ose shkruani 'exit' për të dalë): ";
-    $request = trim(fgets(STDIN));
+// Prompt for password or guest access
+echo "Enter password or 'guest' to continue as guest: ";
+$password = trim(fgets(STDIN));
 
-    if ($request === 'exit') {
+if (socket_sendto($client_socket, $password, strlen($password), 0, $server_ip, $port) === false) {
+    die("Failed to send password: " . socket_strerror(socket_last_error($client_socket)) . "\n");
+}
+
+$response = '';
+$from = '';
+$port_from = 0;
+$bytes_received = socket_recvfrom($client_socket, $response, 1024, 0, $from, $port_from);
+
+if ($bytes_received === false) {
+    die("Error receiving response: " . socket_strerror(socket_last_error($client_socket)) . "\n");
+}
+
+$response = trim($response);
+echo "Server response: $response\n";
+
+if (strpos($response, 'Full Access') !== false) {
+    echo "Menu: [list, read <file>, write <file> <content>, delete <file>, create <file>, exit]\n";
+} elseif (strpos($response, 'Edit Access') !== false) {
+    echo "Menu: [list, read <file>, write <file> <content>, exit]\n";
+} elseif (strpos($response, 'Read Only') !== false) {
+    echo "Menu: [list, read <file>, exit]\n";
+} else {
+    echo "Invalid access level. Exiting...\n";
+    exit;
+}
+
+// Main loop for sending commands
+while (true) {
+    echo "Enter command: ";
+    $command = trim(fgets(STDIN));
+
+    if ($command === 'exit') {
         break;
     }
 
-    // Kërkesa për qasje
-    if ($request === 'full_access' || $request === 'read_only' || $request === 'edit') {
-        $request_message = 'kerko_' . $request;
-        if (socket_sendto($client_socket, $request_message, strlen($request_message), 0, $server_ip, $port) === false) {
-            echo "Dërgimi i kërkesës dështoi: " . socket_strerror(socket_last_error($client_socket)) . "\n";
-            continue;
-        }
-
-        // Leximi i përgjigjes nga serveri
-        $response = '';
-        $from = '';
-        $port_from = 0;
-        $bytes_received = socket_recvfrom($client_socket, $response, 1024, 0, $from, $port_from);
-
-        if ($bytes_received === false) {
-            echo "Gabim në marrjen e përgjigjes: " . socket_strerror(socket_last_error($client_socket)) . "\n";
-            continue;
-        }
-
-        $response = trim($response);
-        echo "Përgjigje nga serveri: $response\n";
-
-        if (strpos($response, 'aprovua') !== false) {
-            // Pasi të aprovohet qasja, lejo komandat
-            while (true) {
-                echo "Shkruani komandën (read <file>, write <file> <content>, delete <file>, open <file>, create <file> ose 'back' për t'u kthyer): ";
-                $command = trim(fgets(STDIN));
-                if ($command === 'back') {
-                    break;
-                }
-
-                // Dërgo komandën te serveri
-                if (socket_sendto($client_socket, $command, strlen($command), 0, $server_ip, $port) === false) {
-                    echo "Dërgimi i komandës dështoi: " . socket_strerror(socket_last_error($client_socket)) . "\n";
-                    continue;
-                }
-
-                // Lexo përgjigjen nga serveri
-                $response = '';
-                socket_recvfrom($client_socket, $response, 1024, 0, $from, $port_from);
-                $response = trim($response);
-                echo "Përgjigje nga serveri: $response\n";
-            }
-        }
-    } else {
-        echo "Opsion i pavlefshëm. Provoni përsëri.\n";
+    if (socket_sendto($client_socket, $command, strlen($command), 0, $server_ip, $port) === false) {
+        echo "Failed to send command: " . socket_strerror(socket_last_error($client_socket)) . "\n";
+        continue;
     }
+
+    $response = '';
+    $bytes_received = socket_recvfrom($client_socket, $response, 1024, 0, $from, $port_from);
+
+    if ($bytes_received === false) {
+        echo "Error receiving response: " . socket_strerror(socket_last_error($client_socket)) . "\n";
+        continue;
+    }
+
+    $response = trim($response);
+    echo "Server response: $response\n";
 }
 
 socket_close($client_socket);
