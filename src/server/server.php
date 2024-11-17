@@ -61,7 +61,8 @@ while (true) {
                 }
             } elseif ($command === 'open') {
                 if (file_exists($file_name)) {
-                    if ($access_type === 'full_access' || $access_type === 'edit_access' || $access_type === 'read_only') {
+                    if ($access_type === 'full_access' || $access_type === 'edit_access') {
+                        // Open file with full or edit permissions
                         if (PHP_OS_FAMILY === 'Windows') {
                             exec("notepad " . escapeshellarg($file_name));
                         } elseif (PHP_OS_FAMILY === 'Linux') {

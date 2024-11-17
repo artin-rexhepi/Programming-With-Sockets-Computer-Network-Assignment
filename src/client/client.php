@@ -11,7 +11,7 @@ if ($client_socket === false) {
 echo "Client running. Connecting to $server_ip:$port\n";
 
 // Prompt for password or guest access
-echo "Enter password (admin2024, editor2024) or 'guest' to continue as guest: ";
+echo "Enter password if you are admin or editor or type 'guest' to continue as guest: ";
 $password = trim(fgets(STDIN));
 
 if (socket_sendto($client_socket, $password, strlen($password), 0, $server_ip, $port) === false) {
@@ -35,7 +35,7 @@ if (strpos($response, 'Full Access') !== false) {
 } elseif (strpos($response, 'Edit Access') !== false) {
     echo "Menu: [list, read <file>, write <file> <content>, open <file>, exit]\n";
 } elseif (strpos($response, 'Read Only') !== false) {
-    echo "Menu: [list, read <file>, open <file>, exit]\n";
+    echo "Menu: [list, read <file>, exit]\n";
 } else {
     echo "Invalid access level. Exiting...\n";
     exit;
