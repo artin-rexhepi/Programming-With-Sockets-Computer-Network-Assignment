@@ -1,4 +1,5 @@
 <?php
+// Server.php
 $port = 8080; 
 $ip_address = '192.168.1.19'; 
 
@@ -46,39 +47,35 @@ while (true) {
             $command = $command_parts[0];
             $file_name = isset($command_parts[1]) ? $command_parts[1] : '';
 
-            if ($command === 'read') {
-                if ($permissions[$from] === 'kerko_full_access' || $permissions[$from] === 'kerko_read_only' || $permissions[$from] === 'kerko_edit') {
-                    if (file_exists($file_name)) {
+            if (!in_array($command, ['read', 'write', 'delete', 'open', 'create'])) {
+                $response = "Unknown command.";
+            } elseif (!empty($file_name) && in_array($command, ['read', 'write', 'delete', 'open', 'create']) && !file_exists($file_name) && $command !== 'create') {
+                $response = "File $file_name does not exist.";
+            } else {
+                if ($command === 'read') {
+                    if ($permissions[$from] === 'kerko_full_access' || $permissions[$from] === 'kerko_read_only' || $permissions[$from] === 'kerko_edit') {
                         $content = file_get_contents($file_name);
                         $response = "Content of $file_name:\n$content";
                     } else {
-                        $response = "File $file_name does not exist.";
+                        $response = "You do not have permission to read files.";
                     }
-                } else {
-                    $response = "You do not have permission to read files.";
-                }
-            } elseif ($command === 'write') {
-                if ($permissions[$from] === 'kerko_full_access' || $permissions[$from] === 'kerko_edit') {
-                    $new_content = implode(" ", array_slice($command_parts, 2));
-                    file_put_contents($file_name, $new_content);
-                    $response = "New content written to $file_name.";
-                } else {
-                    $response = "You do not have permission to write to files.";
-                }
-            } elseif ($command === 'delete') {
-                if ($permissions[$from] === 'kerko_full_access') {
-                    if (file_exists($file_name)) {
+                } elseif ($command === 'write') {
+                    if ($permissions[$from] === 'kerko_full_access' || $permissions[$from] === 'kerko_edit') {
+                        $new_content = implode(" ", array_slice($command_parts, 2));
+                        file_put_contents($file_name, $new_content);
+                        $response = "New content written to $file_name.";
+                    } else {
+                        $response = "You do not have permission to write to files.";
+                    }
+                } elseif ($command === 'delete') {
+                    if ($permissions[$from] === 'kerko_full_access') {
                         unlink($file_name);
                         $response = "$file_name deleted.";
                     } else {
-                        $response = "File $file_name does not exist.";
+                        $response = "You do not have permission to delete files.";
                     }
-                } else {
-                    $response = "You do not have permission to delete files.";
-                }
-            } elseif ($command === 'open') {
-                if ($permissions[$from] === 'kerko_full_access') {
-                    if (file_exists($file_name)) {
+                } elseif ($command === 'open') {
+                    if ($permissions[$from] === 'kerko_full_access') {
                         if (PHP_OS_FAMILY === 'Windows') {
                             exec("start " . escapeshellarg($file_name));
                         } elseif (PHP_OS_FAMILY === 'Linux') {
@@ -88,24 +85,16 @@ while (true) {
                         }
                         $response = "$file_name opened.";
                     } else {
-                        $response = "File $file_name does not exist.";
+                        $response = "You do not have permission to open files.";
                     }
-                } else {
-                    $response = "You do not have permission to open files.";
-                }
-            } elseif ($command === 'create') {
-                if ($permissions[$from] === 'kerko_full_access') {
-                    if (!file_exists($file_name)) {
+                } elseif ($command === 'create') {
+                    if ($permissions[$from] === 'kerko_full_access') {
                         file_put_contents($file_name, ""); // Create an empty file
                         $response = "$file_name created successfully.";
                     } else {
-                        $response = "File $file_name already exists.";
+                        $response = "You do not have permission to create files.";
                     }
-                } else {
-                    $response = "You do not have permission to create files.";
                 }
-            } else {
-                $response = "Unknown command.";
             }
             socket_sendto($server_socket, $response, strlen($response), 0, $from, $port_from);
         } else {
