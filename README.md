@@ -40,5 +40,5 @@ php src/server/client.php
 - Enter a password (admin2024, editor2024) or proceed as a guest.
 - Use the displayed menu to execute commands based on access level.
 
-##Requirements
+## Requirements
 For detailed requirements, refer to the docs/requirements.md.
