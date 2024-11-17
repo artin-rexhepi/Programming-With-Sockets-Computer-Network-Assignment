@@ -14,8 +14,14 @@ while (true) {
     socket_recvfrom($server_socket, $buf, 1024, 0, $from, $port_from);
 
     if ($buf === 'kerko_full_access' || $buf === 'kerko_read_only' || $buf === 'kerko_edit') {
-        $permissions[$from] = $buf;
-        $response = "$buf u aprovua.";
+        echo "Shkruani aprovimin për $buf (yes/no): ";
+        $approval = trim(fgets(STDIN));
+        if ($approval === 'yes') {
+            $permissions[$from] = $buf;
+            $response = "$buf u aprovua.";
+        } else {
+            $response = "Kërkesa u refuzua.";
+        }
         socket_sendto($server_socket, $response, strlen($response), 0, $from, $port_from);
     }
 }
