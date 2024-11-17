@@ -14,7 +14,7 @@ if (socket_bind($server_socket, $ip_address, $port) === false) {
 
 echo "Server running on UDP at $ip_address:$port\n";
 
-$permissions = []; // Permissions for clients
+$permissions = []; // Store permissions for clients
 
 while (true) {
     $buf = '';
@@ -52,10 +52,27 @@ while (true) {
             if ($command === 'list') {
                 $files = array_diff(scandir(getcwd()), ['.', '..']);
                 $response = "Files:\n" . implode("\n", $files);
-            } elseif ($command === 'read' && $access_type !== 'read_only') {
+            } elseif ($command === 'read') {
                 if (file_exists($file_name)) {
                     $content = file_get_contents($file_name);
                     $response = "Content of $file_name:\n$content";
+                } else {
+                    $response = "File $file_name does not exist.";
+                }
+            } elseif ($command === 'open') {
+                if (file_exists($file_name)) {
+                    if ($access_type === 'full_access' || $access_type === 'edit_access' || $access_type === 'read_only') {
+                        if (PHP_OS_FAMILY === 'Windows') {
+                            exec("notepad " . escapeshellarg($file_name));
+                        } elseif (PHP_OS_FAMILY === 'Linux') {
+                            exec("xdg-open " . escapeshellarg($file_name) . " > /dev/null &");
+                        } elseif (PHP_OS_FAMILY === 'Darwin') {
+                            exec("open " . escapeshellarg($file_name));
+                        }
+                        $response = "File $file_name opened.";
+                    } else {
+                        $response = "You do not have permission to open files.";
+                    }
                 } else {
                     $response = "File $file_name does not exist.";
                 }
