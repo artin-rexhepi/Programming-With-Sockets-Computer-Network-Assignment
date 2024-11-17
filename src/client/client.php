@@ -1,7 +1,7 @@
 <?php
 // Client.php
-$server_ip = '192.168.1.19'; // Server's IP address
-$port = 12345; // Server's port number
+$server_ip = '192.168.1.19'; 
+$port = 12345; 
 
 $client_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 if ($client_socket === false) {
@@ -10,7 +10,7 @@ if ($client_socket === false) {
 
 echo "Client running. Connecting to $server_ip:$port\n";
 
-// Prompt for password or guest access
+
 echo "Enter password if you are admin or editor or type 'guest' to continue as guest: ";
 $password = trim(fgets(STDIN));
 
@@ -41,7 +41,7 @@ if (strpos($response, 'Full Access') !== false) {
     exit;
 }
 
-// Main loop for sending commands
+
 while (true) {
     echo "Enter command: ";
     $command = trim(fgets(STDIN));

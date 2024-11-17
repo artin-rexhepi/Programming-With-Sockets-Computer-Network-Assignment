@@ -1,7 +1,7 @@
 <?php
 // Server.php
-$port = 12345; // Port number
-$ip_address = '192.168.1.19'; // Server's IP address
+$port = 12345; 
+$ip_address = '192.168.1.19'; 
 
 $server_socket = socket_create(AF_INET, SOCK_DGRAM, SOL_UDP);
 if ($server_socket === false) {
@@ -14,14 +14,14 @@ if (socket_bind($server_socket, $ip_address, $port) === false) {
 
 echo "Server running on UDP at $ip_address:$port\n";
 
-$permissions = []; // Store permissions for clients
+$permissions = []; 
 
 while (true) {
     $buf = '';
     $from = '';
     $port_from = 0;
 
-    // Receive data from the client
+
     $bytes_received = socket_recvfrom($server_socket, $buf, 1024, 0, $from, $port_from);
     if ($bytes_received === false) {
         echo "Error receiving message: " . socket_strerror(socket_last_error($server_socket)) . "\n";
@@ -32,7 +32,7 @@ while (true) {
     if ($buf) {
         echo "Request from $from:$port_from: $buf\n";
 
-        // Handle password validation
+        
         if ($buf === 'admin2024') {
             $permissions[$from] = 'full_access';
             $response = "Access granted: Full Access";
@@ -43,7 +43,7 @@ while (true) {
             $permissions[$from] = 'read_only';
             $response = "Access granted: Read Only";
         } elseif (isset($permissions[$from])) {
-            // Handle commands based on permissions
+           
             $access_type = $permissions[$from];
             $command_parts = explode(" ", $buf);
             $command = $command_parts[0];
@@ -62,7 +62,7 @@ while (true) {
             } elseif ($command === 'open') {
                 if (file_exists($file_name)) {
                     if ($access_type === 'full_access' || $access_type === 'edit_access') {
-                        // Open file with full or edit permissions
+                       
                         if (PHP_OS_FAMILY === 'Windows') {
                             exec("notepad " . escapeshellarg($file_name));
                         } elseif (PHP_OS_FAMILY === 'Linux') {
