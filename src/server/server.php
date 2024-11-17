@@ -77,6 +77,23 @@ while (true) {
                 } else {
                     $response = "You do not have permission to delete files.";
                 }
+            } elseif ($command === 'open') {
+                if ($permissions[$from] === 'kerko_full_access') {
+                    if (file_exists($file_name)) {
+                        if (PHP_OS_FAMILY === 'Windows') {
+                            exec("start " . escapeshellarg($file_name));
+                        } elseif (PHP_OS_FAMILY === 'Linux') {
+                            exec("xdg-open " . escapeshellarg($file_name) . " > /dev/null &");
+                        } elseif (PHP_OS_FAMILY === 'Darwin') {
+                            exec("open " . escapeshellarg($file_name));
+                        }
+                        $response = "$file_name opened.";
+                    } else {
+                        $response = "File $file_name does not exist.";
+                    }
+                } else {
+                    $response = "You do not have permission to open files.";
+                }
             } else {
                 $response = "Unknown command.";
             }
