@@ -19,13 +19,6 @@
 7. Send messages to the server in text format.
 8. Have full access to folders/files on the server.
 
-## Additional Requirements
-
-- Each group member should be able to explain the entire project and have both scripts (client and server) ready for execution on their device.
-- The project must be fully functional and hosted on GitHub by all group members. Members who have not contributed will not receive full credit, and individual assessment points may be deducted.
-- Work on the project and commit code to GitHub continuously, rather than uploading all the code at once. If the code is uploaded all at once, penalty points will be applied.
-- The uploaded code on GitHub must be public.
-
 ## Protocol and Language
 
 - The assignment requires using the **UDP protocol** and implementing the project in **PHP**.
