@@ -1,5 +1,4 @@
 <?php
-// Server.php
 $port = 8080; 
 $ip_address = '192.168.1.19'; 
 
@@ -14,7 +13,7 @@ if (socket_bind($server_socket, $ip_address, $port) === false) {
 
 echo "Server running on UDP at $ip_address:$port\n";
 
-$permissions = []; 
+$permissions = []; // List of permissions for clients
 
 while (true) {
     $buf = '';
@@ -93,6 +92,17 @@ while (true) {
                     }
                 } else {
                     $response = "You do not have permission to open files.";
+                }
+            } elseif ($command === 'create') {
+                if ($permissions[$from] === 'kerko_full_access') {
+                    if (!file_exists($file_name)) {
+                        file_put_contents($file_name, ""); // Create an empty file
+                        $response = "$file_name created successfully.";
+                    } else {
+                        $response = "File $file_name already exists.";
+                    }
+                } else {
+                    $response = "You do not have permission to create files.";
                 }
             } else {
                 $response = "Unknown command.";
